@@ -10,7 +10,6 @@ use std::os::raw::{c_int, c_void};
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 const N: usize = 100;
-
 extern "C" fn progress(
     instance : *mut c_void,
     x        : *const lbfgsfloatval_t,
@@ -42,10 +41,10 @@ extern "C" fn progress(
 }
 
 extern "C" fn evaluate(instance: *mut c_void,
-            x: *const lbfgsfloatval_t,
-            g: *mut lbfgsfloatval_t,
-            n: c_int,
-            step: lbfgsfloatval_t) -> lbfgsfloatval_t
+                       x: *const lbfgsfloatval_t,
+                       g: *mut lbfgsfloatval_t,
+                       n: c_int,
+                       step: lbfgsfloatval_t) -> lbfgsfloatval_t
 {
     let n = n as usize;
     // convert pointer to native data type
@@ -72,35 +71,47 @@ extern "C" fn evaluate(instance: *mut c_void,
 
 fn main() {
     // Initialize the variables
-    let mut x = [0.0 as lbfgsfloatval_t; N];
-    for i in (0..N).step_by(2) {
-        x[i] = -1.2;
-        x[i+1] = 1.0;
-    }
+    // FIXME: will triggler seagment fault error
+    // let mut x = [0.0 as lbfgsfloatval_t; N];
+    // for i in (0..N).step_by(2) {
+    //     x[i] = -1.2;
+    //     x[i+1] = 1.0;
+    // }
 
-    // initial parameters
-    let mut param: lbfgs_parameter_t;
-    unsafe {
-        param = ::std::mem::uninitialized();
-        lbfgs_parameter_init(&mut param);
-    }
-
-    let mut fx: lbfgsfloatval_t = 0.0;
     // Start the L-BFGS optimization; this will invoke the callback functions
     // evaluate() and progress() when necessary.
+    unsafe {
+        let mut fx: lbfgsfloatval_t = 0.0;
 
-    let ret = unsafe {
-        lbfgs(N as c_int,
+        let mut x = lbfgs_malloc(N as c_int);
+        let mut x = unsafe {
+            Vec::from_raw_parts(x, N, N)
+        };
+
+        for i in (0..N).step_by(2) {
+            x[i] = -1.2;
+            x[i+1] = 1.0;
+        }
+
+        // initial parameters
+        let mut param: lbfgs_parameter_t;
+        param = ::std::mem::uninitialized();
+        lbfgs_parameter_init(&mut param);
+
+        let ret = lbfgs(N as c_int,
               x.as_mut_ptr(),
               &mut fx,
               Some(evaluate),
               Some(progress),
               null_mut(),
               &mut param
-        )};
+        );
 
-    // Report the result.
-    println!("L-BFGS optimization terminated with status code = {:?}", ret);
-    println!("  fx = {}, x[0] = {}, x[1] = {}\n", fx, x[0], x[1]);
+        // Report the result.
+        println!("L-BFGS optimization terminated with status code = {:?}", ret);
+        println!("  fx = {}, x[0] = {}, x[1] = {}\n", fx, x[0], x[1]);
+
+        lbfgs_free(x.as_mut_ptr());
+    };
 }
 // main.rs:1 ends here
