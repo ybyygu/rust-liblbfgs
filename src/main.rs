@@ -54,7 +54,7 @@ extern "C" fn evaluate(instance: *mut c_void,
 
     // convert pointer to native data type
     let mut g = unsafe {
-        Vec::from_raw_parts(g, n, n)
+        ::std::slice::from_raw_parts_mut(g, n)
     };
 
     let mut fx: lbfgsfloatval_t = 0.0;
@@ -71,23 +71,16 @@ extern "C" fn evaluate(instance: *mut c_void,
 
 fn main() {
     // Initialize the variables
-    // FIXME: will triggler seagment fault error
-    // let mut x = [0.0 as lbfgsfloatval_t; N];
-    // for i in (0..N).step_by(2) {
-    //     x[i] = -1.2;
-    //     x[i+1] = 1.0;
-    // }
+    let mut x = [0.0 as lbfgsfloatval_t; N];
+    for i in (0..N).step_by(2) {
+        x[i] = -1.2;
+        x[i+1] = 1.0;
+    }
 
     // Start the L-BFGS optimization; this will invoke the callback functions
     // evaluate() and progress() when necessary.
+    let mut fx: lbfgsfloatval_t = 0.0;
     unsafe {
-        let mut fx: lbfgsfloatval_t = 0.0;
-
-        let mut x = lbfgs_malloc(N as c_int);
-        let mut x = unsafe {
-            Vec::from_raw_parts(x, N, N)
-        };
-
         for i in (0..N).step_by(2) {
             x[i] = -1.2;
             x[i+1] = 1.0;
@@ -110,8 +103,6 @@ fn main() {
         // Report the result.
         println!("L-BFGS optimization terminated with status code = {:?}", ret);
         println!("  fx = {}, x[0] = {}, x[1] = {}\n", fx, x[0], x[1]);
-
-        lbfgs_free(x.as_mut_ptr());
     };
 }
 // main.rs:1 ends here
