@@ -4,7 +4,7 @@
 [package]
 name = "liblbfgs"
 edition = "2018"
-version = "0.0.3"
+version = "0.0.4"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
