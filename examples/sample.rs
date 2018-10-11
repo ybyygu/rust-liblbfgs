@@ -1,9 +1,9 @@
-// example
+// examples
 // :PROPERTIES:
 // :header-args: :tangle examples/sample.rs
 // :END:
 
-// [[file:~/Workspace/Programming/rust-libs/lbfgs/lbfgs.note::*example][example:1]]
+// [[file:~/Workspace/Programming/rust-libs/lbfgs/lbfgs.note::*examples][examples:1]]
 use liblbfgs::LBFGS;
 use quicli::prelude::*;
 
@@ -40,4 +40,4 @@ fn main() {
     let fx = lbfgs.run(&mut x, evaluate).expect("lbfgs run");
     println!("  fx = {:}, x[0] = {}, x[1] = {}\n", fx, x[0], x[1]);
 }
-// example:1 ends here
+// examples:1 ends here
