@@ -3,7 +3,7 @@
 // :header-args: :tangle src/main.rs
 // :END:
 
-// [[file:~/Workspace/Programming/rust-libs/rust-liblbfgs/lbfgs.note::*main.rs][main.rs:1]]
+// [[file:~/Workspace/Programming/rust-libs/lbfgs/lbfgs.note::*main.rs][main.rs:1]]
 use std::ptr::null_mut;
 use std::os::raw::{c_int, c_void};
 
