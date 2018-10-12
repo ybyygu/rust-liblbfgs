@@ -8,7 +8,7 @@ quasi-Newton optimization routines (limited memory BFGS and OWL-QN).
 # Usage
 
     // 0. Import the lib
-    use liblbfgs::LBFGS;
+    use liblbfgs::{LBFGS, Progress};
     
     // 1. Initialize data
     let mut x = [0.0 as f64; N];
@@ -18,7 +18,7 @@ quasi-Newton optimization routines (limited memory BFGS and OWL-QN).
     }
     
     // 2. Define evaluator callback
-    fn evaluate(arr_x: &[f64], gx: &mut [f64]) -> Result<f64> {
+    let evaluate= |arr_x: &[f64], gx: &mut [f64]| {
         let n = arr_x.len();
     
         let mut fx = 0.0;
@@ -31,11 +31,13 @@ quasi-Newton optimization routines (limited memory BFGS and OWL-QN).
         }
     
         Ok(fx)
-    }
+    };
     
     // 3. Carry out LBFGS optimization
     let mut lbfgs = LBFGS::default();
-    let fx = lbfgs.run(&mut x, evaluate).expect("lbfgs run");
+    let fx = lbfgs.run(&mut x, evaluate, |_: &Progress| false).expect("lbfgs run");
+
+Full codes with comments are available in examples/sample.rs.
 
 Run the example:
 

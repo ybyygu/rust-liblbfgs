@@ -46,39 +46,49 @@ impl Default for LBFGSParameter {
 
 // [[file:~/Workspace/Programming/rust-libs/lbfgs/lbfgs.note::*lbfgs][lbfgs:1]]
 // for evaluate variables
-pub type EvaluateFn = fn(x: &[f64], gx: &mut [f64]) -> Result<f64>;
+// pub type EvaluateFn = fn(x: &[f64], gx: &mut [f64]) -> Result<f64>;
+// pub type EvaluateFn = FnMut(&[f64], &mut [f64]) -> Result<f64>;
 
 // for monitoring optimization progress
 pub type ProgressFn = fn(prgr: &Progress) -> bool;
 
-#[derive(Clone)]
 #[repr(C)]
-pub struct LBFGS {
+pub struct LBFGS<F, G>
+where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
+      G: FnMut(&Progress) -> bool,
+{
     pub param: LBFGSParameter,
-    progress: ProgressFn,
-    evaluate: EvaluateFn,
+    evaluate: Option<F>,
+    progress: Option<G>,
 }
 
-impl Default for LBFGS {
+impl<F, G> Default for LBFGS<F, G>
+where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
+      G: FnMut(&Progress) -> bool,
+{
     fn default() -> Self {
         LBFGS {
             param   : LBFGSParameter::default(),
-            evaluate: evaluate_default,
-            progress: progress_default,
+            evaluate: None,
+            progress: None,
         }
     }
 }
 
-impl LBFGS {
+impl<F, G> LBFGS<F, G>
+where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
+      G: FnMut(&Progress) -> bool,
+{
     /// Start the L-BFGS optimization; this will invoke the callback functions
     /// evaluate() and progress() when necessary.
     ///
     /// # Parameters
     /// - arr_x  : The array of variables, which will be updated during optimization.
     /// - eval_fn: A closure to evaluate arr_x
-    pub fn run(&mut self, arr_x: &mut [f64], eval_fn: EvaluateFn) -> Result<f64>
+    pub fn run(&mut self, arr_x: &mut [f64], eval_fn: F, prgr_fn: G) -> Result<f64>
     {
-        self.evaluate = eval_fn;
+        self.evaluate = Some(eval_fn);
+        self.progress = Some(prgr_fn);
 
         // Cast LBFGS as a void pointer for passing it to lbfgs as the instance
         // parameter
@@ -92,8 +102,8 @@ impl LBFGS {
             lbfgs(n as c_int,
                   arr_x.as_mut_ptr(),
                   &mut fx,
-                  Some(evaluate_wrapper),
-                  Some(progress_wrapper),
+                  Some(evaluate_wrapper::<F, G>),
+                  Some(progress_wrapper::<F, G>),
                   instance,
                   &mut self.param
             )
@@ -113,31 +123,35 @@ impl LBFGS {
 // [[file:~/Workspace/Programming/rust-libs/lbfgs/lbfgs.note::*callback:%20progress][callback: progress:1]]
 type Cancel = bool;
 
-impl LBFGS {
+impl<F, G> LBFGS<F, G>
+where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
+      G: FnMut(&Progress) -> bool,
+{
     /// Assign a callback function for monitoring optimization progress
-    pub fn set_progress_monitor(&mut self, prgr_fn: ProgressFn) {
-        self.progress = prgr_fn;
+    pub fn set_progress_monitor(&mut self, prgr_fn: G) {
+        self.progress = Some(prgr_fn);
     }
 }
 
 /// Store optimization progress data
+#[repr(C)]
 pub struct Progress<'a> {
     /// The current values of variables
-    arr_x: &'a [f64],
+    pub arr_x: &'a [f64],
     /// The current gradient values of variables.
-    grd_x: &'a [f64],
+    pub grd_x: &'a [f64],
     /// The current value of the objective function.
-    fx: f64,
+    pub fx: f64,
     /// The Euclidean norm of the variables
-    xnorm: f64,
+    pub xnorm: f64,
     /// The Euclidean norm of the gradients.
-    gnorm: f64,
+    pub gnorm: f64,
     /// The line-search step used for this iteration.
-    step: f64,
+    pub step: f64,
     /// The iteration count.
-    niter: usize,
+    pub niter: usize,
     /// The number of evaluations called for this iteration.
-    ncall: usize
+    pub ncall: usize
 }
 
 /// default progress monitor
@@ -153,7 +167,7 @@ pub fn progress_default(prgr: &Progress) -> Cancel {
 }
 
 // for converting rust instance to a C progress callback function
-extern fn progress_wrapper(
+extern fn progress_wrapper<F, G>(
     instance : *mut c_void,
     x        : *const lbfgsfloatval_t,
     g        : *const lbfgsfloatval_t,
@@ -164,6 +178,8 @@ extern fn progress_wrapper(
     n        : c_int,
     k        : c_int,
     ls       : c_int) -> c_int
+where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
+      G: FnMut(&Progress) -> bool,
 {
     let n = n as usize;
     // convert pointer to native data type
@@ -177,7 +193,7 @@ extern fn progress_wrapper(
     };
 
     // cast as LBFGS instance
-    let ptr_lbfgs = instance as *mut LBFGS;
+    let ptr_lbfgs = instance as *mut LBFGS::<F, G>;
     unsafe {
         let prgr = Progress {
             arr_x,
@@ -190,10 +206,14 @@ extern fn progress_wrapper(
             ncall: ls as usize
         };
 
-        let to_cancel = (*ptr_lbfgs).progress;
-        if to_cancel(&prgr) {
-            return 1 as c_int
+        if let Some(ref mut to_cancel) = (*ptr_lbfgs).progress {
+            if to_cancel(&prgr) {
+                return 1 as c_int
+            } else {
+                0 as c_int
+            }
         } else {
+            println!("no progress callback function defined!");
             0 as c_int
         }
     }
@@ -206,11 +226,13 @@ extern fn progress_wrapper(
 // # Parameters
 // - fx: evaluated value
 // - gx: gradients of arr_x
-extern fn evaluate_wrapper(instance: *mut c_void,
-                           x: *const lbfgsfloatval_t,
-                           g: *mut lbfgsfloatval_t,
-                           n: c_int,
-                           step: lbfgsfloatval_t) -> lbfgsfloatval_t
+extern fn evaluate_wrapper<F, G>(instance: *mut c_void,
+                                 x: *const lbfgsfloatval_t,
+                                 g: *mut lbfgsfloatval_t,
+                                 n: c_int,
+                                 step: lbfgsfloatval_t) -> lbfgsfloatval_t
+where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
+      G: FnMut(&Progress) -> bool,
 {
     let n = n as usize;
     // convert pointer to native data type
@@ -224,11 +246,16 @@ extern fn evaluate_wrapper(instance: *mut c_void,
     };
 
     // cast as Rust instance
-    let ptr_lbfgs = instance as *mut LBFGS;
-    let feval = unsafe {
-        (*ptr_lbfgs).evaluate
+    let ptr_lbfgs = instance as *mut LBFGS::<F, G>;
+    let fx = unsafe {
+        if let Some(ref mut f) = (*ptr_lbfgs).evaluate {
+            let v = f(&arr_x, &mut gx);
+            v.expect("evaluated data")
+        } else {
+            panic!("no evaluate callback function defined!");
+        }
     };
-    let fx = feval(&arr_x, &mut gx).expect("eval instance");
+
     fx
 }
 
