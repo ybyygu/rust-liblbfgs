@@ -37,6 +37,9 @@ quasi-Newton optimization routines (limited memory BFGS and OWL-QN).
     let mut lbfgs = LBFGS::default();
     let fx = lbfgs.run(&mut x, evaluate, |_: &Progress| false).expect("lbfgs run");
 
+The callback functions are native Rust FnMut closures, possible to
+capture/change variables in the environment.
+
 Full codes with comments are available in examples/sample.rs.
 
 Run the example:
