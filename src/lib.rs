@@ -53,6 +53,7 @@ impl Default for LBFGSParameter {
 pub type ProgressFn = fn(prgr: &Progress) -> bool;
 
 #[repr(C)]
+#[derive(Debug, Clone)]
 pub struct LBFGS<F, G>
 where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
       G: FnMut(&Progress) -> bool,
@@ -72,6 +73,24 @@ where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
             evaluate: None,
             progress: None,
         }
+    }
+}
+
+/// Create lbfgs optimizer with fmax convergence
+impl<F, G> LBFGS<F, G>
+where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
+      G: FnMut(&Progress) -> bool,
+{
+    pub fn new(fmax: f64) -> Self {
+        assert!(fmax > 1e-8);
+
+        let mut lbfgs = LBFGS::default();
+
+        // let mut param = LBFGSParameter::default();
+        // param.epsilon = fmax;
+        lbfgs.param.epsilon = fmax;
+
+        lbfgs
     }
 }
 
@@ -135,6 +154,7 @@ where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
 
 /// Store optimization progress data
 #[repr(C)]
+#[derive(Debug, Clone)]
 pub struct Progress<'a> {
     /// The current values of variables
     pub arr_x: &'a [f64],
