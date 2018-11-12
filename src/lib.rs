@@ -1,6 +1,8 @@
 // base
 
 // [[file:~/Workspace/Programming/rust-libs/lbfgs/lbfgs.note::*base][base:1]]
+#![allow(nonstandard_style)]
+
 use std::ptr::null_mut;
 use std::os::raw::{c_int, c_void};
 use quicli::prelude::*;
@@ -86,8 +88,6 @@ where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
 
         let mut lbfgs = LBFGS::default();
 
-        // let mut param = LBFGSParameter::default();
-        // param.epsilon = fmax;
         lbfgs.param.epsilon = fmax;
 
         lbfgs
