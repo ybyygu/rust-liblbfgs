@@ -1,8 +1,10 @@
 
 # lbfgs
 
-This is a Rust wrapper around Naoaki Okazaki (chokkan)&rsquo;s [liblbfgs](http://chokkan.org/software/liblbfgs/) library of
-quasi-Newton optimization routines (limited memory BFGS and OWL-QN).
+This is a Rusty wrapper built around the [libLBFGS](http://chokkan.org/software/liblbfgs/) library of quasi-Newton
+optimization routines (limited memory BFGS and OWL-QN) by Naoaki Okazaki.
+
+For further information, please refer to the [libLBFGS](http://www.chokkan.org/software/liblbfgs/structlbfgs__parameter__t.html) page for tunable parameters.
 
 
 # Usage

@@ -3,6 +3,9 @@
 // :header-args: :tangle examples/sample.rs
 // :END:
 
+// Adopted from sample.c in original source.
+
+
 // [[file:~/Workspace/Programming/rust-libs/lbfgs/lbfgs.note::*sample.rs][sample.rs:1]]
 use liblbfgs::{LBFGS, Progress};
 use quicli::prelude::*;

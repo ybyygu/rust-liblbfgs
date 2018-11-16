@@ -47,13 +47,6 @@ impl Default for LBFGSParameter {
 // lbfgs
 
 // [[file:~/Workspace/Programming/rust-libs/lbfgs/lbfgs.note::*lbfgs][lbfgs:1]]
-// for evaluate variables
-// pub type EvaluateFn = fn(x: &[f64], gx: &mut [f64]) -> Result<f64>;
-// pub type EvaluateFn = FnMut(&[f64], &mut [f64]) -> Result<f64>;
-
-// for monitoring optimization progress
-pub type ProgressFn = fn(prgr: &Progress) -> bool;
-
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct LBFGS<F, G>
@@ -78,17 +71,17 @@ where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
     }
 }
 
-/// Create lbfgs optimizer with fmax convergence
+/// Create lbfgs optimizer with epsilon convergence
 impl<F, G> LBFGS<F, G>
 where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
       G: FnMut(&Progress) -> bool,
 {
-    pub fn new(fmax: f64) -> Self {
-        assert!(fmax > 1e-8);
+    pub fn new(epsilon: f64) -> Self {
+        assert!(epsilon.is_sign_positive());
 
         let mut lbfgs = LBFGS::default();
 
-        lbfgs.param.epsilon = fmax;
+        lbfgs.param.epsilon = epsilon;
 
         lbfgs
     }
@@ -138,6 +131,7 @@ where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
 // lbfgs:1 ends here
 
 // callback: progress
+// for monitoring optimization progress
 
 // [[file:~/Workspace/Programming/rust-libs/lbfgs/lbfgs.note::*callback:%20progress][callback: progress:1]]
 type Cancel = bool;
@@ -241,6 +235,7 @@ where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
 // callback: progress:1 ends here
 
 // callback: evalulate
+// for evaluate variables
 
 // [[file:~/Workspace/Programming/rust-libs/lbfgs/lbfgs.note::*callback:%20evalulate][callback: evalulate:1]]
 // # Parameters

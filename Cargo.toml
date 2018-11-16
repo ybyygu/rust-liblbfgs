@@ -12,5 +12,5 @@ quicli = "*"
 
 [build-dependencies]
 cc = "*"
-bindgen = "0.26.3"
+bindgen = "0.42"
 # cargo:1 ends here
