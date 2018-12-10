@@ -62,5 +62,13 @@ fn main() {
     let mut lbfgs = LBFGS::default();
     let fx = lbfgs.run(&mut x, evaluate, progress).expect("lbfgs run");
     println!("  fx = {:}, x[0] = {}, x[1] = {}\n", fx, x[0], x[1]);
+
+    lbfgs.param.orthantwise_c = 1.0;
+    lbfgs.param.linesearch = 2;
+    lbfgs.param.orthantwise_start = 0;
+    lbfgs.param.orthantwise_end = 99;
+    let fx = lbfgs.run(&mut x, evaluate, progress).expect("lbfgs run");
+    println!("  fx = {:}, x[0] = {}, x[1] = {}\n", fx, x[0], x[1]);
+    
 }
 // sample.rs:1 ends here

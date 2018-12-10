@@ -1,14 +1,14 @@
 # cargo                                                             :Scratch:
 
-# [[file:~/Workspace/Programming/rust-libs/lbfgs/lbfgs.note::*cargo][cargo:1]]
+# [[file:~/Workspace/Programming/rust-libs/liblbfgs/lbfgs.note::*cargo][cargo:1]]
 [package]
 name = "liblbfgs"
 edition = "2018"
-version = "0.0.6"
+version = "0.0.7"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
-quicli = "*"
+quicli = "0.3"
 
 [build-dependencies]
 cc = "*"
