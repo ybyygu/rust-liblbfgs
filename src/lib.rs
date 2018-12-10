@@ -1,11 +1,14 @@
 // base
 
-// [[file:~/Workspace/Programming/rust-libs/lbfgs/lbfgs.note::*base][base:1]]
+// [[file:~/Workspace/Programming/rust-libs/liblbfgs/lbfgs.note::*base][base:1]]
 #![allow(nonstandard_style)]
 
 use std::ptr::null_mut;
 use std::os::raw::{c_int, c_void};
+
 use quicli::prelude::*;
+
+type Result<T> = ::std::result::Result<T, Error>;
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
@@ -46,7 +49,7 @@ impl Default for LBFGSParameter {
 
 // lbfgs
 
-// [[file:~/Workspace/Programming/rust-libs/lbfgs/lbfgs.note::*lbfgs][lbfgs:1]]
+// [[file:~/Workspace/Programming/rust-libs/liblbfgs/lbfgs.note::*lbfgs][lbfgs:1]]
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct LBFGS<F, G>
@@ -133,7 +136,7 @@ where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
 // callback: progress
 // for monitoring optimization progress
 
-// [[file:~/Workspace/Programming/rust-libs/lbfgs/lbfgs.note::*callback:%20progress][callback: progress:1]]
+// [[file:~/Workspace/Programming/rust-libs/liblbfgs/lbfgs.note::*callback:%20progress][callback: progress:1]]
 type Cancel = bool;
 
 impl<F, G> LBFGS<F, G>
@@ -237,7 +240,7 @@ where F: FnMut(&[f64], &mut [f64]) -> Result<f64>,
 // callback: evalulate
 // for evaluate variables
 
-// [[file:~/Workspace/Programming/rust-libs/lbfgs/lbfgs.note::*callback:%20evalulate][callback: evalulate:1]]
+// [[file:~/Workspace/Programming/rust-libs/liblbfgs/lbfgs.note::*callback:%20evalulate][callback: evalulate:1]]
 // # Parameters
 // - fx: evaluated value
 // - gx: gradients of arr_x

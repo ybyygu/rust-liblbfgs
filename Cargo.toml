@@ -13,4 +13,11 @@ quicli = "0.3"
 [build-dependencies]
 cc = "*"
 bindgen = "0.42"
+
+[dev-dependencies]
+criterion = "0.2"
+
+[[bench]]
+name = "rosenbrock"
+harness = false
 # cargo:1 ends here
